@@ -1,5 +1,6 @@
 package util
 
+
 import (
 	"bufio"
 	"bytes"
@@ -13,18 +14,24 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
+var AWS_REGION string
+
 type BreakContinue struct {
 	Break bool
 }
 
-func ListAllOjbects(bucket string, prefix string) []string {
+func SetAWSRegion(region string) {
+    AWS_REGION = region
+}
+
+func ListAllObjects(bucket string, prefix string) []string {
 	var allObjects []string
 	var continuationToken *string
 	var isTruncated bool
 	var batchObjects []string
 
 	for {
-		batchObjects, isTruncated, continuationToken = ListBatchOjbects(bucket, prefix, continuationToken)
+		batchObjects, isTruncated, continuationToken = ListBatchObjects(bucket, prefix, continuationToken)
 
 		if len(batchObjects) > 0 {
 			allObjects = append(allObjects, batchObjects...)
@@ -38,12 +45,15 @@ func ListAllOjbects(bucket string, prefix string) []string {
 	return allObjects
 }
 
-func ListBatchOjbects(bucket string, prefix string, continuationToken *string) ([]string, bool, *string) {
+func ListBatchObjects(bucket string, prefix string, continuationToken *string) ([]string, bool, *string) {
 
+	log.Println("ListBatchObjects with continuationToken: ", continuationToken)
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	cfg.Region = AWS_REGION
 
 	client := s3.NewFromConfig(cfg)
 
@@ -67,7 +77,7 @@ func ListBatchOjbects(bucket string, prefix string, continuationToken *string) (
 		log.Fatal(err)
 	}
 
-	log.Println("ListBatchOjbects get objects count: ", len(result.Contents), "isTurnTruncated: ", *result.IsTruncated)
+	log.Println("ListBatchObjects get objects count: ", len(result.Contents), "isTurnTruncated: ", *result.IsTruncated)
 	log.Println("NextContinuationToken: ", result.NextContinuationToken)
 
 	objectList := make([]string, len(result.Contents))
@@ -85,6 +95,7 @@ func ReadObjectAsString(bucket string, key string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
+	cfg.Region = AWS_REGION
 
 	client := s3.NewFromConfig(cfg)
 
@@ -128,6 +139,7 @@ func ProcessS3ObjectLineByLine(bucket string, key string, processFn func(string)
 	if err != nil {
 		log.Fatal(err)
 	}
+	cfg.Region = AWS_REGION
 
 	client := s3.NewFromConfig(cfg)
 

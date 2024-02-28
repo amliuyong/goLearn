@@ -10,7 +10,7 @@ import (
 )
 
 func FindRidForEventIdInS3Prefix(bucket string, prefix string, eventId string) (bool, string, string) {
-	objects := util.ListAllOjbects(bucket, prefix)
+	objects := util.ListAllObjects(bucket, prefix)
 
 	var foundRid string
 	var found bool
